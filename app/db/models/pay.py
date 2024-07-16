@@ -13,5 +13,4 @@ class Pay(Base):
     date = Column(DATETIME, nullable=False)
     tag = Column(VARCHAR(10), nullable=False)
     user_id = Column(VARCHAR(15), ForeignKey('user.id'), nullable=False)
-
     user = relationship("User", back_populates="pays")
