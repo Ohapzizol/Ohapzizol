@@ -1,0 +1,21 @@
+# DS_Store
+.DS_Store
+
+# env
+.env
+
+# Images
+/app/format/img/
+
+# MySQL Cache
+/app/mysql/data
+
+.idea
+.mypy_cache
+.vscode
+__pycache__
+env
+docs_build
+venv
+docs.zip
+archive.zip
