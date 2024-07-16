@@ -52,7 +52,19 @@ async def find_all_payments_by_user_id_and_date(_userId: str, _date: date) -> Li
     return result
 
 
-async def find_all_payments_by_user_id_last_six(_userId: str) -> List[Pay] or None:
+async def find_all_monthly_payment_bu_user_id_and_now(_userId: str) -> List[Pay] or None:
+    db = SessionLocal()
+    timestamp = datetime.now().date()
+    scop = timestamp - timedelta(days=timestamp.day)
+
+    result = db.query(Pay).filter(Pay.user_id == _userId, scop < Pay.date).all()
+
+    if not result:
+        return None
+    return result
+
+
+async def find_all_payments_by_user_id_and_last_six(_userId: str) -> List[Pay] or None:
     db = SessionLocal()
     timestamp = datetime.now().date()
     scop = timestamp - timedelta(weeks=5)
