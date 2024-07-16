@@ -6,3 +6,8 @@ class SignUpRequest(BaseModel):
     name: str
     password: str
     balance: int
+
+
+class SignInRequest(BaseModel):
+    id: str
+    password: str
