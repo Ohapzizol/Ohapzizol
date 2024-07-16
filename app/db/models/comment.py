@@ -6,7 +6,6 @@ from ..base import Base
 
 class Comment(Base):
     __tablename__ = "comment"
-
     id = Column(BIGINT, primary_key=True, autoincrement=True, nullable=False)
     content = Column(VARCHAR(50), nullable=False)
     month = Column(INTEGER, nullable=False)

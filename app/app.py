@@ -1,4 +1,5 @@
 import logging
+from http import HTTPStatus
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, HTTPException
@@ -40,7 +41,7 @@ def validate_string(_input_str: str, _pattern: str):
         return False
 
 
-@app.post("/signup")
+@app.post("/signup", status_code=HTTPStatus.CREATED)
 async def signup(request: SignUpRequest) -> None:
     if 4 < len(request.name):
         raise HTTPException(status_code=400, detail="이름은 4자리 이상일 수 없습니다.")

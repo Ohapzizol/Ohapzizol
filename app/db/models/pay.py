@@ -5,7 +5,6 @@ from ..base import Base
 
 class Pay(Base):
     __tablename__ = "pay"
-
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     name = Column(VARCHAR(30), nullable=False)
     value = Column(BIGINT, nullable=False)
