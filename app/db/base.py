@@ -9,9 +9,7 @@ from .session import SessionLocal
 async def exist_tech_by_ids(_id: str):
     db = SessionLocal()
 
-    try:
-        result = db.query(User).filter_by(id=_id).first()
-    except NoResultFound:
+    if db.query(User).filter_by(id=_id).first() is None:
         return False
     return True
 
