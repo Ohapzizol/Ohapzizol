@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.exc import NoResultFound
+import bcrypt
 
 from .base_class import Base
 from .models.user import User
@@ -23,3 +24,8 @@ async def create_user(_id: str, _name: str, _password: str, _balance: int):
     db.add(user)
     db.commit()
     db.refresh(user)
+
+async def match_user_and_password(_id: str, _password: bytes):
+    db = SessionLocal()
+    user = db.query(User).filter_by(id=_id).first()
+    return bcrypt.checkpw(_password, user.password.encode("utf-8"))

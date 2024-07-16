@@ -2,13 +2,13 @@ import logging
 from http import HTTPStatus
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 
 from app.db.session import db_engine
 from app.db.base import Base
 import re
 
-from app.dto import SignUpRequest
+from app.dto import SignUpRequest, SignInRequest
 from app.service.auth import AuthService
 
 
@@ -51,3 +51,12 @@ async def signup(request: SignUpRequest) -> None:
         raise HTTPException(status_code=400, detail="비밀번호는 영문 소문자 4자리 이상, 숫자 4자리 이상, 특수문자 한자리 이상, 최대 15자리 이하의 문자열입니다.")
 
     await authService.signup(request)
+
+@app.post("/signin")
+async def signin(request: SignInRequest, response: Response):
+    if not authService.finduser(request):
+        raise HTTPException(status_code=404, detail="User does not exist")
+    if not authService.pwmatch(request):
+        raise HTTPException(status_code=401, detail="Password does not match")
+
+    response.headers.append(key='Authorization', value=await authService.signin(request))
