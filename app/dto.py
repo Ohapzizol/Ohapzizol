@@ -1,4 +1,5 @@
-from typing import List
+from datetime import time
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -15,12 +16,28 @@ class SignInRequest(BaseModel):
     password: str
 
 
-class MonthlyPaymentResponse(BaseModel):
+class DailyResponse(BaseModel):
     id: int
     balance: int
     profit: int
     day: int
 
 
-class MonthlyPaymentListResponse(BaseModel):
-    payments: List[MonthlyPaymentResponse]
+class MonthlyResponse(BaseModel):
+    payments: List[DailyResponse]
+
+
+class PaymentResponse(BaseModel):
+    id: int
+    name: str
+    value: int
+    description: Optional[str]
+    time: time
+    tag: Optional[str]
+
+
+class DailyPaymentsResponse(BaseModel):
+    balance: int
+    profit: int
+    payments: List[PaymentResponse]
+

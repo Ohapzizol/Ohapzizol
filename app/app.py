@@ -1,17 +1,18 @@
 import logging
+import re
+from datetime import date
 from http import HTTPStatus
-from typing import Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, HTTPException, Response, Header
 
-from app.db.session import db_engine
 from app.db.base import Base
-import re
-
-from app.dto import SignUpRequest, SignInRequest, MonthlyPaymentListResponse
+from app.db.session import db_engine
+from app.dto import SignUpRequest, SignInRequest, MonthlyResponse, DailyPaymentsResponse
+from app.jwt.jwt import getCurrentUser
 from app.service.auth import AuthService
 from app.service.daily import DailyService
+from app.service.pay import PayService
 
 
 def create_tables():
@@ -34,6 +35,7 @@ password_rgx = r'^[a-z]{4,}[0-9]{4,}[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\/?]$|^[a-z]
 
 authService = AuthService()
 dailyService = DailyService()
+payService = PayService()
 
 
 def validate_string(_input_str: str, _pattern: str):
@@ -66,8 +68,9 @@ async def login(request: SignInRequest, response: Response) -> None:
     response.headers.append(key='Authorization', value=await authService.login(request))
 
 
-@app.get("/pay/monthly", status_code=HTTPStatus.OK, response_model=MonthlyPaymentListResponse)
-async def getMonthlyPay(year: int = None, month: int = None, authorization: str = Header(None)) -> MonthlyPaymentListResponse:
+@app.get("/daily/monthly", status_code=HTTPStatus.OK, response_model=MonthlyResponse)
+async def getMonthlyDaily(year: int = None, month: int = None,
+                          authorization: str = Header(None, convert_underscores=False)) -> MonthlyResponse:
     if year is None:
         raise HTTPException(400, "year must not be null")
 
@@ -77,6 +80,25 @@ async def getMonthlyPay(year: int = None, month: int = None, authorization: str 
         raise HTTPException(400, "month must be between 1 and 12")
 
     if authorization is None:
-        raise HTTPException(400, "authorization must not be null")
+        raise HTTPException(401, "authorization must not be null")
 
-    return await dailyService.getMonthlyPay(year, month, authorization)
+    return await dailyService.getMonthlyDaily(year, month, authorization)
+
+
+@app.get("/payments", status_code=200, response_model=DailyPaymentsResponse)
+async def getPayments(date: date, authorization: str = Header(None, convert_underscores=False)) -> DailyPaymentsResponse:
+    if date is None:
+        raise HTTPException(400, "date must not be null")
+    if authorization is None:
+        raise HTTPException(401, "authorization must not be null")
+
+    user = await getCurrentUser(authorization)
+
+    payments = await payService.getPaymentsByDate(date, user)
+    profit, balance = await dailyService.getDaily(user)
+
+    return DailyPaymentsResponse(
+        profit=profit,
+        balance=balance,
+        payments=payments
+    )
