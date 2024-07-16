@@ -52,11 +52,12 @@ async def signup(request: SignUpRequest) -> None:
 
     await authService.signup(request)
 
-@app.post("/signin")
-async def signin(request: SignInRequest, response: Response):
-    if not authService.finduser(request):
-        raise HTTPException(status_code=404, detail="User does not exist")
-    if not authService.pwmatch(request):
-        raise HTTPException(status_code=401, detail="Password does not match")
 
-    response.headers.append(key='Authorization', value=await authService.signin(request))
+@app.post("/login", status_code=HTTPStatus.OK)
+async def login(request: SignInRequest, response: Response):
+    if not validate_string(request.id, login_rgx):
+        raise HTTPException(status_code=400, detail="아이디는 영문 소문자 4자리 이상, 숫자 4자리 이상, 최대 15자리 이하의 문자열입니다.")
+    if not validate_string(request.password, password_rgx):
+        raise HTTPException(status_code=400, detail="비밀번호는 영문 소문자 4자리 이상, 숫자 4자리 이상, 특수문자 한자리 이상, 최대 15자리 이하의 문자열입니다.")
+
+    response.headers.append(key='Authorization', value=await authService.login(request))

@@ -1,13 +1,11 @@
 from fastapi import HTTPException
-from sqlalchemy.exc import NoResultFound
-import bcrypt
 
 from .base_class import Base
 from .models.user import User
 from .session import SessionLocal
 
 
-async def exist_tech_by_ids(_id: str):
+async def exist_tech_by_ids(_id: str) -> bool:
     db = SessionLocal()
 
     if db.query(User).filter_by(id=_id).first() is None:
@@ -15,7 +13,7 @@ async def exist_tech_by_ids(_id: str):
     return True
 
 
-async def create_user(_id: str, _name: str, _password: str, _balance: int):
+async def create_user(_id: str, _name: str, _password: str, _balance: int) -> None:
     if await exist_tech_by_ids(_id=_id):
         raise HTTPException(status_code=409, detail="Already Exist Id")
 
@@ -25,7 +23,7 @@ async def create_user(_id: str, _name: str, _password: str, _balance: int):
     db.commit()
     db.refresh(user)
 
-async def match_user_and_password(_id: str, _password: bytes):
+
+async def find_by_id(_id: str) -> User or None:
     db = SessionLocal()
-    user = db.query(User).filter_by(id=_id).first()
-    return bcrypt.checkpw(_password, user.password.encode("utf-8"))
+    return db.query(User).filter_by(id=_id).first()

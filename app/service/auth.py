@@ -1,6 +1,7 @@
 from app.dto import SignUpRequest, SignInRequest
 
-from ..db.base import create_user, match_user_and_password, exist_tech_by_ids
+from fastapi import HTTPException
+from ..db.base import create_user, find_by_id, exist_tech_by_ids
 from ..jwt.jwt import create_access_token
 import bcrypt
 
@@ -17,19 +18,13 @@ class AuthService:
         )
 
     @staticmethod
-    async def finduser(request: SignInRequest):
-        return await exist_tech_by_ids(request.id)
-    
-    @staticmethod
-    async def pwmatch(request: SignInRequest):
-        pwmatch = match_user_and_password(
-            request.id,
-            request.password.encode("utf-8")
-        )
-        return pwmatch
+    async def login(request: SignInRequest):
+        user = await find_by_id(request.id)
 
-    @staticmethod
-    async def signin(request: SignInRequest):
-        return create_access_token(
-            { "sub": request.id }
-        )
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if not bcrypt.checkpw(request.password.encode('utf-8'), user.password.encode('utf-8')):
+            raise HTTPException(status_code=401, detail="Incorrect password")
+
+        return create_access_token(user.id)
