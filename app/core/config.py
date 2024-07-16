@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     SERVER_PORT: int
     SERVER_HOST: str
     MYSQL_ROOT_PASSWORD: str
+    JWT_KEY: str
+    JWT_EXP: int
 
     class Config:
         env_file = ".env"
