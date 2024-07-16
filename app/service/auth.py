@@ -27,4 +27,4 @@ class AuthService:
         if not bcrypt.checkpw(request.password.encode('utf-8'), user.password.encode('utf-8')):
             raise HTTPException(status_code=401, detail="Incorrect password")
 
-        return create_access_token(user.id)
+        return await create_access_token(user.id)
