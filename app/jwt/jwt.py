@@ -7,6 +7,7 @@ settings = get_setting()
 SECRET_KEY = settings.JWT_KEY
 ALGORITHM = "HS256"
 
+
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now() + timedelta(seconds=settings.JWT_EXP)
