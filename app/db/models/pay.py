@@ -2,6 +2,7 @@ from sqlalchemy import Column, VARCHAR, DATETIME, BIGINT, ForeignKey
 from sqlalchemy.orm import relationship
 from ..base import Base
 
+
 class Pay(Base):
     __tablename__ = "pay"
 

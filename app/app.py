@@ -3,8 +3,8 @@ import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 
-from app.db.base import Base
 from app.db.session import db_engine
+from app.db.base import Base
 
 
 def create_tables():
