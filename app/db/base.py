@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import List
 
 from fastapi import HTTPException
@@ -44,9 +44,24 @@ async def find_all_daily_by_user_id_and_year_and_month(_userId: str, _year: int,
     return result
 
 
-async def find_all_payments_by_user_id(_userId: str, _date: date) -> List[Pay] or None:
+async def find_all_payments_by_user_id_and_date(_userId: str, _date: date) -> List[Pay] or None:
     db = SessionLocal()
     result = db.query(Pay).order_by(Pay.time.desc()).filter(Pay.user_id == _userId, Pay.date == _date).all()
+    if not result:
+        return None
+    return result
+
+
+async def find_all_payments_by_user_id_last_six(_userId: str) -> List[Pay] or None:
+    db = SessionLocal()
+    timestamp = datetime.now().date()
+    scop = timestamp - timedelta(weeks=5)
+
+    result = db.query(Pay).order_by(Pay.date.desc(), Pay.time.desc()).filter(
+        Pay.user_id == _userId,
+        scop <= Pay.date,
+        Pay.date <= timestamp
+    ).all()
     if not result:
         return None
     return result

@@ -41,3 +41,7 @@ class DailyPaymentsResponse(BaseModel):
     profit: int
     payments: List[PaymentResponse]
 
+
+class StatisticsPaymentsResponse(BaseModel):
+    statistics: dict
+
