@@ -1,6 +1,10 @@
+from typing import List
+
 from fastapi import HTTPException
 
 from .base_class import Base
+from .models.daily import Daily
+from .models.pay import Pay
 from .models.user import User
 from .session import SessionLocal
 
@@ -24,6 +28,15 @@ async def create_user(_id: str, _name: str, _password: str, _balance: int) -> No
     db.refresh(user)
 
 
-async def find_by_id(_id: str) -> User or None:
+async def find_user_by_id(_id: str) -> User or None:
     db = SessionLocal()
     return db.query(User).filter_by(id=_id).first()
+
+
+async def find_pay_by_user_id_and_year_and_month(_userId: str, _year: int, _month: int) -> List[Daily] or None:
+    db = SessionLocal()
+    result = db.query(Daily).order_by(Daily.day.asc()).filter(Daily.user_id == _userId, Daily.year == _year, Daily.month == _month).all()
+
+    if not result:
+        return None
+    return result

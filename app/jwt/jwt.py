@@ -1,5 +1,3 @@
-import token
-
 from fastapi import HTTPException
 
 from app.core.config import get_setting
@@ -7,7 +5,7 @@ import jwt
 from datetime import datetime, timedelta
 
 from app.db.models.user import User
-from ..db.base import find_by_id
+from ..db.base import find_user_by_id
 
 settings = get_setting()
 
@@ -15,7 +13,7 @@ ALGORITHM = "HS256"
 
 
 async def create_access_token(_sub: str):
-    expire = datetime.now() + timedelta(seconds=settings.JWT_EXP)
+    expire = datetime.now() + timedelta(seconds=1)
     encoded_jwt = jwt.encode({
         'sub': _sub,
         'exp': expire,
@@ -24,8 +22,8 @@ async def create_access_token(_sub: str):
 
 
 async def getCurrentUser(_token: str) -> User:
-    subject = jwt.decode(token, settings.JWT_KEY, algorithms=[ALGORITHM]).get('sub')
-    user = find_by_id(subject)
+    subject = jwt.decode(_token[7::], settings.JWT_KEY, algorithms=[ALGORITHM])['sub']
+    user = await find_user_by_id(subject)
 
     if user is None:
         raise HTTPException(401, "wrong token")

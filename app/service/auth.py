@@ -1,9 +1,9 @@
-from app.dto import SignUpRequest, SignInRequest
-
-from fastapi import HTTPException
-from ..db.base import create_user, find_by_id, exist_tech_by_ids
-from ..jwt.jwt import create_access_token
 import bcrypt
+from fastapi import HTTPException
+
+from app.dto import SignUpRequest, SignInRequest
+from ..db.base import create_user, find_user_by_id
+from ..jwt.jwt import create_access_token
 
 
 class AuthService:
@@ -19,7 +19,7 @@ class AuthService:
 
     @staticmethod
     async def login(request: SignInRequest):
-        user = await find_by_id(request.id)
+        user = await find_user_by_id(request.id)
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
