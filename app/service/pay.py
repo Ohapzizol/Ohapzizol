@@ -3,8 +3,8 @@ from typing import List
 
 from fastapi import HTTPException
 
-from app.db.base import find_all_payments_by_user_id_and_date, find_all_payments_by_user_id_last_six
-from app.db.models.pay import Pay
+from app.db.base import find_all_payments_by_user_id_and_date, find_all_payments_by_user_id_and_last_six, \
+    find_all_monthly_payment_bu_user_id_and_now
 from app.db.models.user import User
 from app.dto import PaymentResponse, StatisticsPaymentsResponse
 from app.jwt.jwt import getCurrentUser
@@ -32,7 +32,7 @@ class PayService:
     async def getPaymentsLatestStatistics(_token: str) -> StatisticsPaymentsResponse:
         user = await getCurrentUser(_token)
 
-        payments = await find_all_payments_by_user_id_last_six(user.id)
+        payments = await find_all_payments_by_user_id_and_last_six(user.id)
 
         if not payments:
             raise HTTPException(204, "There is no payment")
@@ -50,3 +50,27 @@ class PayService:
 
         return StatisticsPaymentsResponse(statistics=response)
 
+    @staticmethod
+    async def getPaymentsTagStatistics(_token: str) -> StatisticsPaymentsResponse:
+        user = await getCurrentUser(_token)
+
+        payments = await find_all_monthly_payment_bu_user_id_and_now(user.id)
+
+        if not payments:
+            raise HTTPException(204, "There is no content")
+
+        response = dict()
+
+        for pay in payments:
+            if pay.tag in response:
+                if pay.value < 0:
+                    response[pay.tag]['expenditure'] -= pay.value
+                else:
+                    response[pay.tag]['income'] += pay.value
+            else:
+                if pay.value < 0:
+                    response[pay.tag] = {'expenditure': -pay.value, 'income': 0}
+                else:
+                    response[pay.tag] = {'expenditure': 0, 'income': pay.value}
+
+        return StatisticsPaymentsResponse(statistics=response)

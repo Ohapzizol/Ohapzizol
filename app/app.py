@@ -110,3 +110,10 @@ async def getPaymentsStatistics(authorization: str = Header(None, convert_unders
 
     return await payService.getPaymentsLatestStatistics(authorization)
 
+
+@app.get("/statistics/tag", status_code=200, response_model=StatisticsPaymentsResponse)
+async def getPaymentsStatistics(authorization: str = Header(None, convert_underscores=False)) -> StatisticsPaymentsResponse:
+    if authorization is None:
+        raise HTTPException(401, "authorization must not be null")
+
+    return await payService.getPaymentsTagStatistics(authorization)
