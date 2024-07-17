@@ -104,6 +104,21 @@ async def find_all_user() -> List[User] or None:
     return db.query(User).filter_by().all()
 
 
+async def find_pay_by_id(_id: int) -> Pay or None:
+    db = SessionLocal()
+    return db.query(Pay).filter_by(id=_id).first()
+
+
+async def delete_pay(_pay: Pay) -> None:
+    db = SessionLocal()
+    try:
+        db.delete(_pay)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e
+
+
 async def find_all_daily_by_user_id_and_year_and_month(_userId: str, _year: int, _month: int) -> List[Daily] or None:
     db = SessionLocal()
     result = db.query(Daily).order_by(Daily.day.asc()).filter(Daily.user_id == _userId, Daily.year == _year,

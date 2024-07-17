@@ -167,3 +167,14 @@ async def re_training():
 
 
 scheduler.add_job(re_training, 'cron', year='*', month='*', day='1', hour='0', minute='0')
+
+
+@app.delete("/delete_pay/{pay_id}", status_code=200)
+async def delete_pay(pay_id: int, authorization: str = Header(None)):
+    if pay_id is None:
+        raise HTTPException(status_code=400, detail="pay_id must not be null")
+
+    if authorization is None:
+        raise HTTPException(401, "authorization must not be null")
+
+    await payService.deleteById(_pay_id=pay_id, _token=authorization)
