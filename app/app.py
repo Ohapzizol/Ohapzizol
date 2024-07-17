@@ -6,7 +6,7 @@ from http import HTTPStatus
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, HTTPException, Response, Header
 
-from app.db.base import Base
+from app.db.base import Base, find_all_user
 from app.db.session import db_engine
 from app.dto import SignUpRequest, SignInRequest, MonthlyResponse, DailyPaymentsResponse, StatisticsPaymentsResponse, \
     WritePaymentRequest, PaymentType, CommentResponse
@@ -15,6 +15,7 @@ from app.service.auth import AuthService
 from app.service.daily import DailyService
 from app.service.pay import PayService
 from app.service.comment import CommentService
+from app.service.predict import PredictService
 
 
 def create_tables():
@@ -38,6 +39,7 @@ password_rgx = r'^[a-z]{4,}[0-9]{4,}[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\/?]$|^[a-z]
 authService = AuthService()
 dailyService = DailyService()
 payService = PayService()
+predictService = PredictService()
 
 
 def validate_string(_input_str: str, _pattern: str):
@@ -71,7 +73,8 @@ async def login(request: SignInRequest, response: Response) -> None:
 
 
 @app.get("/daily/monthly", status_code=HTTPStatus.OK, response_model=MonthlyResponse)
-async def getMonthlyDaily(year: int = None, month: int = None, authorization: str = Header(None, convert_underscores=False)) -> MonthlyResponse:
+async def getMonthlyDaily(year: int = None, month: int = None,
+                          authorization: str = Header(None, convert_underscores=False)) -> MonthlyResponse:
     if year is None:
         raise HTTPException(400, "year must not be null")
 
@@ -87,7 +90,8 @@ async def getMonthlyDaily(year: int = None, month: int = None, authorization: st
 
 
 @app.get("/payments", status_code=200, response_model=DailyPaymentsResponse)
-async def getPayments(date: date, authorization: str = Header(None, convert_underscores=False)) -> DailyPaymentsResponse:
+async def getPayments(date: date,
+                      authorization: str = Header(None, convert_underscores=False)) -> DailyPaymentsResponse:
     if date is None:
         raise HTTPException(400, "date must not be null")
     if authorization is None:
@@ -100,13 +104,14 @@ async def getPayments(date: date, authorization: str = Header(None, convert_unde
 
     return DailyPaymentsResponse(
         profit=profit,
-        balance=user.balance,
+        balance=balance,
         payments=payments
     )
 
 
 @app.post("/payment", status_code=HTTPStatus.CREATED)
-async def writePayment(request: WritePaymentRequest, authorization: str = Header(None, convert_underscores=False)) -> None:
+async def writePayment(request: WritePaymentRequest,
+                       authorization: str = Header(None, convert_underscores=False)) -> None:
     if 30 < len(request.title):
         raise HTTPException(400, 'title은 30자 이하입니다')
     if request.value < 0:
@@ -120,7 +125,8 @@ async def writePayment(request: WritePaymentRequest, authorization: str = Header
 
 
 @app.get("/statistics/latest", status_code=200, response_model=StatisticsPaymentsResponse)
-async def getPaymentsStatistics(authorization: str = Header(None, convert_underscores=False)) -> StatisticsPaymentsResponse:
+async def getPaymentsStatistics(
+        authorization: str = Header(None, convert_underscores=False)) -> StatisticsPaymentsResponse:
     if authorization is None:
         raise HTTPException(401, "authorization must not be null")
 
@@ -128,7 +134,8 @@ async def getPaymentsStatistics(authorization: str = Header(None, convert_unders
 
 
 @app.get("/statistics/tag", status_code=200, response_model=StatisticsPaymentsResponse)
-async def getPaymentsStatistics(authorization: str = Header(None, convert_underscores=False)) -> StatisticsPaymentsResponse:
+async def getPaymentsStatistics(
+        authorization: str = Header(None, convert_underscores=False)) -> StatisticsPaymentsResponse:
     if authorization is None:
         raise HTTPException(401, "authorization must not be null")
 
@@ -136,9 +143,27 @@ async def getPaymentsStatistics(authorization: str = Header(None, convert_unders
 
 
 @app.get("/comment", status_code=200, response_model=CommentResponse)
-async def getComment(year: int = None, month: int = None, authorization: str = Header(None, convert_underscores=False))\
+async def getTodayBalanceComment(authorization: str = Header(None, convert_underscores=False)) \
         -> CommentResponse:
     if authorization is None:
         raise HTTPException(401, "authorization must not be null")
 
-    return await CommentService.createComment(year, month, authorization)
+    return await CommentService.getBalanceComment(authorization)
+
+
+@app.get("/comment/predict", status_code=200)
+async def getPredictComment(authorization: str = Header(None, convert_underscores=False)):
+    if authorization is None:
+        raise HTTPException(401, "authorization must not be null")
+
+    return await PredictService.getPredictComment(await getCurrentUser(authorization))
+
+
+async def re_training():
+    users = await find_all_user()
+
+    for user in users:
+        await predictService.getPredictComment(user)
+
+
+scheduler.add_job(re_training, 'cron', year='*', month='*', day='1', hour='0', minute='0')

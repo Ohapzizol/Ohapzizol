@@ -64,4 +64,5 @@ class WritePaymentRequest(BaseModel):
 class CommentResponse(BaseModel):
     name: str
     nickname: str
-    description: Optional[str]
+    balance: str
+    evaluation: str
