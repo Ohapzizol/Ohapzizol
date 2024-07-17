@@ -70,7 +70,8 @@ async def login(request: SignInRequest, response: Response) -> None:
 
 
 @app.get("/daily/monthly", status_code=HTTPStatus.OK, response_model=MonthlyResponse)
-async def getMonthlyDaily(year: int = None, month: int = None, authorization: str = Header(None, convert_underscores=False)) -> MonthlyResponse:
+async def getMonthlyDaily(year: int = None, month: int = None,
+                          authorization: str = Header(None, convert_underscores=False)) -> MonthlyResponse:
     if year is None:
         raise HTTPException(400, "year must not be null")
 
@@ -86,7 +87,8 @@ async def getMonthlyDaily(year: int = None, month: int = None, authorization: st
 
 
 @app.get("/payments", status_code=200, response_model=DailyPaymentsResponse)
-async def getPayments(date: date, authorization: str = Header(None, convert_underscores=False)) -> DailyPaymentsResponse:
+async def getPayments(date: date,
+                      authorization: str = Header(None, convert_underscores=False)) -> DailyPaymentsResponse:
     if date is None:
         raise HTTPException(400, "date must not be null")
     if authorization is None:
@@ -105,7 +107,8 @@ async def getPayments(date: date, authorization: str = Header(None, convert_unde
 
 
 @app.post("/payment", status_code=HTTPStatus.CREATED)
-async def writePayment(request: WritePaymentRequest, authorization: str = Header(None, convert_underscores=False)) -> None:
+async def writePayment(request: WritePaymentRequest,
+                       authorization: str = Header(None, convert_underscores=False)) -> None:
     if 30 < len(request.title):
         raise HTTPException(400, 'title은 30자 이하입니다')
     if request.value < 0:
@@ -119,7 +122,8 @@ async def writePayment(request: WritePaymentRequest, authorization: str = Header
 
 
 @app.get("/statistics/latest", status_code=200, response_model=StatisticsPaymentsResponse)
-async def getPaymentsStatistics(authorization: str = Header(None, convert_underscores=False)) -> StatisticsPaymentsResponse:
+async def getPaymentsStatistics(
+        authorization: str = Header(None, convert_underscores=False)) -> StatisticsPaymentsResponse:
     if authorization is None:
         raise HTTPException(401, "authorization must not be null")
 
@@ -127,8 +131,20 @@ async def getPaymentsStatistics(authorization: str = Header(None, convert_unders
 
 
 @app.get("/statistics/tag", status_code=200, response_model=StatisticsPaymentsResponse)
-async def getPaymentsStatistics(authorization: str = Header(None, convert_underscores=False)) -> StatisticsPaymentsResponse:
+async def getPaymentsStatistics(
+        authorization: str = Header(None, convert_underscores=False)) -> StatisticsPaymentsResponse:
     if authorization is None:
         raise HTTPException(401, "authorization must not be null")
 
     return await payService.getPaymentsTagStatistics(authorization)
+
+
+@app.delete("/delete_pay/{pay_id}", status_code=200)
+async def delete_pay(pay_id: int, authorization: str = Header(None)):
+    if pay_id is None:
+        raise HTTPException(status_code=400, detail="pay_id must not be null")
+
+    if authorization is None:
+        raise HTTPException(401, "authorization must not be null")
+
+    await payService.deleteById(_pay_id=pay_id, _token=authorization)

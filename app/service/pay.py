@@ -1,12 +1,11 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List
 
 from fastapi import HTTPException
 
 from app.db.base import find_all_payments_by_user_id_and_date, find_all_payments_by_user_id_and_last_six, \
     find_all_monthly_payment_bu_user_id_and_now, save_new_payment, update_user, save_daily, find_daily_by_user_id, \
-    update_daily
-from app.db.models.pay import Pay
+    update_daily, find_pay_by_id, delete_pay
 from app.db.models.user import User
 from app.dto import PaymentResponse, StatisticsPaymentsResponse, WritePaymentRequest, PaymentType
 from app.jwt.jwt import getCurrentUser
@@ -103,6 +102,28 @@ class PayService:
             await update_daily(_id=daily.id, _profit=daily.profit + value, _balance=balance, _user_id=user.id)
         else:
             await save_daily(_profit=value, _balance=balance, _user_id=user.id)
+
+    @staticmethod
+    async def deleteById(_pay_id: int, _token: str):
+        user = await getCurrentUser(_token)
+        payment = await find_pay_by_id(_pay_id)
+
+        if not payment:
+            raise HTTPException(404, 'Payment not found')
+
+        if user.id != payment.user_id:
+            raise HTTPException(403, "permission denied")
+
+        if payment.date != datetime.now().date():
+            raise HTTPException(400, "you can't delete this payment")
+
+        await delete_pay(payment)
+
+
+
+
+
+
 
 
 

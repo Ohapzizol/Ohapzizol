@@ -50,9 +50,11 @@ async def save_user(_id: str, _name: str, _password: str, _balance: int) -> None
     db.refresh(user)
 
 
-async def save_new_payment(_title: str, _value: int, _description: Optional[str], _date: date, _time: time, _tag: str, _user_id: str) -> None:
+async def save_new_payment(_title: str, _value: int, _description: Optional[str], _date: date, _time: time, _tag: str,
+                           _user_id: str) -> None:
     db = SessionLocal()
-    payment = Pay(id=None, title=_title, value=_value, description=_description, date=_date, time=_time, tag=_tag, user_id=_user_id)
+    payment = Pay(id=None, title=_title, value=_value, description=_description, date=_date, time=_time, tag=_tag,
+                  user_id=_user_id)
     db.add(payment)
     db.commit()
     db.refresh(payment)
@@ -61,7 +63,8 @@ async def save_new_payment(_title: str, _value: int, _description: Optional[str]
 async def save_daily(_profit: int, _balance: int, _user_id: str) -> None:
     db = SessionLocal()
     timestamp = date.today()
-    daily = Daily(id=None, profit=_profit, balance=_balance, user_id=_user_id, year=timestamp.year, month=timestamp.month, day=timestamp.day)
+    daily = Daily(id=None, profit=_profit, balance=_balance, user_id=_user_id, year=timestamp.year,
+                  month=timestamp.month, day=timestamp.day)
     db.add(daily)
     db.commit()
     db.refresh(daily)
@@ -99,6 +102,21 @@ async def find_daily_by_user_id(_user_id: str) -> Daily or None:
 async def find_user_by_id(_id: str) -> User or None:
     db = SessionLocal()
     return db.query(User).filter_by(id=_id).first()
+
+
+async def find_pay_by_id(_id: int) -> Pay or None:
+    db = SessionLocal()
+    return db.query(Pay).filter_by(id=_id).first()
+
+
+async def delete_pay(_pay: Pay) -> None:
+    db = SessionLocal()
+    try:
+        db.delete(_pay)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e
 
 
 async def find_all_daily_by_user_id_and_year_and_month(_userId: str, _year: int, _month: int) -> List[Daily] or None:
