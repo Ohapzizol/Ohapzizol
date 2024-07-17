@@ -109,10 +109,10 @@ async def find_pay_by_id(_id: int) -> Pay or None:
     return db.query(Pay).filter_by(id=_id).first()
 
 
-async def delete_pay(_pay: Pay) -> None:
+async def delete_pay_by_id(_id: int) -> None:
     db = SessionLocal()
     try:
-        db.delete(_pay)
+        db.query(Pay).filter_by(id=_id).delete()
         db.commit()
     except Exception as e:
         db.rollback()
@@ -168,6 +168,7 @@ async def find_daily_by_user_id_at_now(_userId: str) -> Daily or None:
     db = SessionLocal()
 
     timestamp = datetime.now()
+
     result = db.query(Daily).filter(
         Daily.user_id == _userId,
         Daily.year == timestamp.year,

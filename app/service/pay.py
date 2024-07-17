@@ -5,7 +5,8 @@ from fastapi import HTTPException
 
 from app.db.base import find_all_payments_by_user_id_and_date, find_all_payments_by_user_id_and_last_six, \
     find_all_monthly_payment_by_user_id_at_now, save_new_payment, update_user, save_daily, find_daily_by_user_id_at_now, \
-    update_daily, find_pay_by_id, delete_pay
+    update_daily, find_pay_by_id, delete_pay_by_id
+from app.db.models.pay import Pay
 from app.db.models.user import User
 from app.dto import PaymentResponse, StatisticsPaymentsResponse, WritePaymentRequest, PaymentType
 from app.jwt.jwt import getCurrentUser
@@ -105,8 +106,8 @@ class PayService:
 
     @staticmethod
     async def deleteById(_pay_id: int, _token: str):
-        user = await getCurrentUser(_token)
-        payment = await find_pay_by_id(_pay_id)
+        user: User = await getCurrentUser(_token)
+        payment: Pay = await find_pay_by_id(_pay_id)
 
         if not payment:
             raise HTTPException(404, 'Payment not found')
@@ -117,7 +118,17 @@ class PayService:
         if payment.date != datetime.now().date():
             raise HTTPException(400, "you can't delete this payment")
 
-        await delete_pay(payment)
+        balance = user.balance - payment.value
+
+        await update_user(user.id, user.name, user.password, balance)
+
+        daily = await find_daily_by_user_id_at_now(user.id)
+
+        if not daily:
+            raise HTTPException(500, 'something went wrong')
+
+        await update_daily(_id=daily.id, _profit=daily.profit - payment.value, _balance=balance, _user_id=user.id)
+        await delete_pay_by_id(payment.id)
 
 
 
