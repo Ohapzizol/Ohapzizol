@@ -94,14 +94,14 @@ async def update_daily(_id: int, _profit: int, _balance: int, _user_id: str) -> 
         db.close()
 
 
-async def find_daily_by_user_id(_user_id: str) -> Daily or None:
-    db = SessionLocal()
-    return db.query(Daily).filter_by(user_id=_user_id).first()
-
-
 async def find_user_by_id(_id: str) -> User or None:
     db = SessionLocal()
     return db.query(User).filter_by(id=_id).first()
+
+
+async def find_all_user() -> List[User] or None:
+    db = SessionLocal()
+    return db.query(User).filter_by().all()
 
 
 async def find_pay_by_id(_id: int) -> Pay or None:
@@ -137,7 +137,7 @@ async def find_all_payments_by_user_id_and_date(_userId: str, _date: date) -> Li
     return result
 
 
-async def find_all_monthly_payment_bu_user_id_and_now(_userId: str) -> List[Pay] or None:
+async def find_all_monthly_payment_by_user_id_at_now(_userId: str) -> List[Pay] or None:
     db = SessionLocal()
     timestamp = datetime.now().date()
     scop = timestamp - timedelta(days=timestamp.day)
@@ -173,6 +173,20 @@ async def find_daily_by_user_id_at_now(_userId: str) -> Daily or None:
         Daily.year == timestamp.year,
         Daily.month == timestamp.month,
         Daily.day == timestamp.day
+    ).first()
+
+    if not result:
+        return None
+    return result
+
+
+async def find_daily_by_user_id_and_date(_userId: str, _date: date) -> Daily or None:
+    db = SessionLocal()
+    result = db.query(Daily).filter(
+        Daily.user_id == _userId,
+        Daily.year == _date.year,
+        Daily.month == _date.month,
+        Daily.day == _date.day
     ).first()
 
     if not result:

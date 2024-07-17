@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from jwt import ExpiredSignatureError
 
 from app.core.config import get_setting
 import jwt
@@ -22,10 +23,17 @@ async def create_access_token(_sub: str):
 
 
 async def getCurrentUser(_token: str) -> User:
-    subject = jwt.decode(_token[7::], settings.JWT_KEY, algorithms=[ALGORITHM])['sub']
-    user = await find_user_by_id(subject)
 
-    if user is None:
-        raise HTTPException(401, "wrong token")
+    try:
+        subject = jwt.decode(_token[7::], settings.JWT_KEY, algorithms=[ALGORITHM])['sub']
+        user = await find_user_by_id(subject)
 
-    return user
+        if user is None:
+            raise HTTPException(401, "wrong token")
+
+        return user
+    except Exception as e:
+        if isinstance(e, ExpiredSignatureError):
+            raise HTTPException(403, "token has expired")
+        else:
+            raise e

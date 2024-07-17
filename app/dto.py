@@ -59,3 +59,10 @@ class WritePaymentRequest(BaseModel):
     time: time
     tag: Optional[str]
     typ: PaymentType
+
+
+class CommentResponse(BaseModel):
+    name: str
+    nickname: str
+    balance: str
+    evaluation: str

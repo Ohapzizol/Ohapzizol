@@ -4,7 +4,7 @@ from typing import List
 from fastapi import HTTPException
 
 from app.db.base import find_all_payments_by_user_id_and_date, find_all_payments_by_user_id_and_last_six, \
-    find_all_monthly_payment_bu_user_id_and_now, save_new_payment, update_user, save_daily, find_daily_by_user_id, \
+    find_all_monthly_payment_by_user_id_at_now, save_new_payment, update_user, save_daily, find_daily_by_user_id_at_now, \
     update_daily, find_pay_by_id, delete_pay
 from app.db.models.user import User
 from app.dto import PaymentResponse, StatisticsPaymentsResponse, WritePaymentRequest, PaymentType
@@ -55,7 +55,7 @@ class PayService:
     async def getPaymentsTagStatistics(_token: str) -> StatisticsPaymentsResponse:
         user = await getCurrentUser(_token)
 
-        payments = await find_all_monthly_payment_bu_user_id_and_now(user.id)
+        payments = await find_all_monthly_payment_by_user_id_at_now(user.id)
 
         if not payments:
             raise HTTPException(204, "There is no content")
@@ -96,7 +96,7 @@ class PayService:
 
         await update_user(user.id, user.name, user.password, balance)
 
-        daily = await find_daily_by_user_id(user.id)
+        daily = await find_daily_by_user_id_at_now(user.id)
 
         if daily:
             await update_daily(_id=daily.id, _profit=daily.profit + value, _balance=balance, _user_id=user.id)

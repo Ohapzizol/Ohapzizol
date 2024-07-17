@@ -6,14 +6,16 @@ from http import HTTPStatus
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, HTTPException, Response, Header
 
-from app.db.base import Base
+from app.db.base import Base, find_all_user
 from app.db.session import db_engine
 from app.dto import SignUpRequest, SignInRequest, MonthlyResponse, DailyPaymentsResponse, StatisticsPaymentsResponse, \
-    WritePaymentRequest, PaymentType
+    WritePaymentRequest, PaymentType, CommentResponse
 from app.jwt.jwt import getCurrentUser
 from app.service.auth import AuthService
 from app.service.daily import DailyService
 from app.service.pay import PayService
+from app.service.comment import CommentService
+from app.service.predict import PredictService
 
 
 def create_tables():
@@ -37,6 +39,7 @@ password_rgx = r'^[a-z]{4,}[0-9]{4,}[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\/?]$|^[a-z]
 authService = AuthService()
 dailyService = DailyService()
 payService = PayService()
+predictService = PredictService()
 
 
 def validate_string(_input_str: str, _pattern: str):
@@ -137,6 +140,33 @@ async def getPaymentsStatistics(
         raise HTTPException(401, "authorization must not be null")
 
     return await payService.getPaymentsTagStatistics(authorization)
+
+
+@app.get("/comment", status_code=200, response_model=CommentResponse)
+async def getTodayBalanceComment(authorization: str = Header(None, convert_underscores=False)) \
+        -> CommentResponse:
+    if authorization is None:
+        raise HTTPException(401, "authorization must not be null")
+
+    return await CommentService.getBalanceComment(authorization)
+
+
+@app.get("/comment/predict", status_code=200)
+async def getPredictComment(authorization: str = Header(None, convert_underscores=False)):
+    if authorization is None:
+        raise HTTPException(401, "authorization must not be null")
+
+    return await PredictService.getPredictComment(await getCurrentUser(authorization))
+
+
+async def re_training():
+    users = await find_all_user()
+
+    for user in users:
+        await predictService.getPredictComment(user)
+
+
+scheduler.add_job(re_training, 'cron', year='*', month='*', day='1', hour='0', minute='0')
 
 
 @app.delete("/delete_pay/{pay_id}", status_code=200)
