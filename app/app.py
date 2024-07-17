@@ -8,7 +8,8 @@ from fastapi import FastAPI, HTTPException, Response, Header
 
 from app.db.base import Base
 from app.db.session import db_engine
-from app.dto import SignUpRequest, SignInRequest, MonthlyResponse, DailyPaymentsResponse, StatisticsPaymentsResponse
+from app.dto import SignUpRequest, SignInRequest, MonthlyResponse, DailyPaymentsResponse, StatisticsPaymentsResponse, \
+    WritePaymentRequest, PaymentType
 from app.jwt.jwt import getCurrentUser
 from app.service.auth import AuthService
 from app.service.daily import DailyService
@@ -101,6 +102,20 @@ async def getPayments(date: date, authorization: str = Header(None, convert_unde
         balance=balance,
         payments=payments
     )
+
+
+@app.post("/payment", status_code=HTTPStatus.CREATED)
+async def writePayment(request: WritePaymentRequest, authorization: str = Header(None, convert_underscores=False)) -> None:
+    if 30 < len(request.title):
+        raise HTTPException(400, 'title은 30자 이하입니다')
+    if request.value < 0:
+        raise HTTPException(400, 'value must not be negative')
+    if request.description is not None and 500 < len(request.description):
+        raise HTTPException(400, 'description은 500자 이하입니다')
+    if request.tag is not None and 10 < len(request.tag):
+        raise HTTPException(400, 'tag은 10자 이하입니다')
+
+    await payService.createPayment(request, authorization)
 
 
 @app.get("/statistics/latest", status_code=200, response_model=StatisticsPaymentsResponse)
