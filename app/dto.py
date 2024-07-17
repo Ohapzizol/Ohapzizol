@@ -1,4 +1,5 @@
 from datetime import time
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -29,7 +30,7 @@ class MonthlyResponse(BaseModel):
 
 class PaymentResponse(BaseModel):
     id: int
-    name: str
+    title: str
     value: int
     description: Optional[str]
     time: time
@@ -45,3 +46,16 @@ class DailyPaymentsResponse(BaseModel):
 class StatisticsPaymentsResponse(BaseModel):
     statistics: dict
 
+
+class PaymentType(str, Enum):
+    income = 1
+    expenditure = 2
+
+
+class WritePaymentRequest(BaseModel):
+    title: str
+    value: int
+    description: Optional[str]
+    time: time
+    tag: Optional[str]
+    typ: PaymentType

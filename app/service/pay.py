@@ -4,9 +4,11 @@ from typing import List
 from fastapi import HTTPException
 
 from app.db.base import find_all_payments_by_user_id_and_date, find_all_payments_by_user_id_and_last_six, \
-    find_all_monthly_payment_bu_user_id_and_now
+    find_all_monthly_payment_bu_user_id_and_now, save_new_payment, update_user, save_daily, find_daily_by_user_id, \
+    update_daily
+from app.db.models.pay import Pay
 from app.db.models.user import User
-from app.dto import PaymentResponse, StatisticsPaymentsResponse
+from app.dto import PaymentResponse, StatisticsPaymentsResponse, WritePaymentRequest, PaymentType
 from app.jwt.jwt import getCurrentUser
 
 
@@ -21,7 +23,7 @@ class PayService:
 
         return [PaymentResponse(
             id=pay.id,
-            name=pay.name,
+            title=pay.title,
             value=pay.value,
             description=pay.description,
             tag=pay.tag,
@@ -74,3 +76,33 @@ class PayService:
                     response[pay.tag] = {'expenditure': 0, 'income': pay.value}
 
         return StatisticsPaymentsResponse(statistics=response)
+
+    @staticmethod
+    async def createPayment(request: WritePaymentRequest, _token: str) -> None:
+        user = await getCurrentUser(_token)
+
+        value = request.value if request.typ == PaymentType.income else -request.value
+
+        await save_new_payment(
+            request.title,
+            value,
+            request.description,
+            date.today(),
+            request.time,
+            request.tag,
+            user.id,
+        )
+
+        balance = user.balance + value
+
+        await update_user(user.id, user.name, user.password, balance)
+
+        daily = await find_daily_by_user_id(user.id)
+
+        if daily:
+            await update_daily(_id=daily.id, _profit=daily.profit + value, _balance=balance, _user_id=user.id)
+        else:
+            await save_daily(_profit=value, _balance=balance, _user_id=user.id)
+
+
+
