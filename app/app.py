@@ -9,11 +9,12 @@ from fastapi import FastAPI, HTTPException, Response, Header
 from app.db.base import Base
 from app.db.session import db_engine
 from app.dto import SignUpRequest, SignInRequest, MonthlyResponse, DailyPaymentsResponse, StatisticsPaymentsResponse, \
-    WritePaymentRequest, PaymentType
+    WritePaymentRequest, PaymentType, CommentResponse
 from app.jwt.jwt import getCurrentUser
 from app.service.auth import AuthService
 from app.service.daily import DailyService
 from app.service.pay import PayService
+from app.service.comment import CommentService
 
 
 def create_tables():
@@ -99,7 +100,7 @@ async def getPayments(date: date, authorization: str = Header(None, convert_unde
 
     return DailyPaymentsResponse(
         profit=profit,
-        balance=balance,
+        balance=user.balance,
         payments=payments
     )
 
@@ -132,3 +133,12 @@ async def getPaymentsStatistics(authorization: str = Header(None, convert_unders
         raise HTTPException(401, "authorization must not be null")
 
     return await payService.getPaymentsTagStatistics(authorization)
+
+
+@app.get("/comment", status_code=200, response_model=CommentResponse)
+async def getComment(year: int = None, month: int = None, authorization: str = Header(None, convert_underscores=False))\
+        -> CommentResponse:
+    if authorization is None:
+        raise HTTPException(401, "authorization must not be null")
+
+    return await CommentService.createComment(year, month, authorization)
